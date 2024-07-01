@@ -548,11 +548,14 @@ class Worker(threading.Thread):
                 return
             # If a Add to Cart button has been pressed...
             elif callback.data == "cart_add":
+                global delivery_db
                 # Get the selected product, ensuring it exists
                 p = cart.get(callback.message.message_id)
                 if p is None:
                     continue
                 product = p[0]
+
+                delivery_db = product.delivery
                 # Add 1 copy to the cart
                 cart[callback.message.message_id][1] += 1
                 # Create the product inline keyboard
@@ -592,11 +595,13 @@ class Worker(threading.Thread):
                     reply_markup=final_inline_keyboard)
             # If the Remove from cart button has been pressed...
             elif callback.data == "cart_remove":
+
                 # Get the selected product, ensuring it exists
                 p = cart.get(callback.message.message_id)
                 if p is None:
                     continue
                 product = p[0]
+
                 # Remove 1 copy from the cart
                 if cart[callback.message.message_id][1] > 0:
                     cart[callback.message.message_id][1] -= 1
@@ -630,6 +635,7 @@ class Worker(threading.Thread):
                                                   caption=product.text(w=self,
                                                                        cart_qty=cart[callback.message.message_id][1]),
                                                   reply_markup=product_inline_keyboard)
+
 
                 self.bot.edit_message_text(
                     chat_id=self.chat.id,
@@ -680,7 +686,8 @@ class Worker(threading.Thread):
             self.session.rollback()
         else:
             # User has credit and valid order, perform transaction now
-            self.__order_transaction(order=order, value=-int(self.__get_cart_value(cart)))
+            #print(callback.message.message_id, "mid")
+            self.__order_transaction(order=order, value=-int(self.__get_cart_value(cart)), cart=cart)
 
     def __get_cart_value(self, cart):
         # Calculate total items value in cart
@@ -694,12 +701,13 @@ class Worker(threading.Thread):
         product_list = ""
         for product_id in cart:
             if cart[product_id][1] > 0:
+                #print(cart[product_id][0].id)
                 product_list += cart[product_id][0].text(w=self,
                                                          style="short",
                                                          cart_qty=cart[product_id][1]) + "\n"
         return product_list
 
-    def __order_transaction(self, order, value):
+    def __order_transaction(self, order, value, cart):
         # Create a new transaction and add it to the session
         transaction = db.Transaction(user=self.user,
                                      value=value,
@@ -712,12 +720,11 @@ class Worker(threading.Thread):
         # Commit all the changes
         self.session.commit()
         # Notify admins about new transation
-        self.__order_notify_admins(order=order)
+        self.__order_notify_admins(order=order, delivery_db=delivery_db,cart=cart)
 
-    def __order_notify_admins(self, order):
+    def __order_notify_admins(self, order, delivery_db,cart):
         # Notify the user of the order result
-        self.bot.send_message(self.chat.id, self.loc.get("success_order_created", order=order.text(w=self,
-                                                                                                   user=True)))
+        self.bot.send_message(self.chat.id, self.loc.get("success_order_created", order=f"{order.text(w=self,user=True)}\n\n{delivery_db}"))
         # Notify the admins (in Live Orders mode) of the new order
         admins = self.session.query(db.Admin).filter_by(live_mode=True).all()
         # Create the order keyboard
@@ -732,6 +739,13 @@ class Worker(threading.Thread):
                                   self.loc.get('notification_order_placed',
                                                order=order.text(w=self)),
                                   reply_markup=order_keyboard)
+
+
+        product = self.session.query(db.Product).filter_by(delivery=delivery_db,deleted=False).one()
+        print(product)
+        # "Delete" the product by setting the deleted flag to true
+        product.deleted = True
+        self.session.commit()
 
     def __order_status(self):
         """Display the status of the sent orders."""
@@ -1119,8 +1133,14 @@ class Worker(threading.Thread):
             price = int(price)
         # Ask for the product image
         self.bot.send_message(self.chat.id, self.loc.get("ask_product_image"), reply_markup=cancel)
+
         # Wait for an answer
         photo_list = self.__wait_for_photo(cancellable=True)
+
+        #Ask if there is content for delivery
+        self.bot.send_message(self.chat.id, self.loc.get("ask_product_delivery"), reply_markup=cancel)
+        delivery_info = self.__wait_for_regex(r"(.*)", cancellable=bool(product))
+
         # If a new product is being added...
         if not product:
             # Create the db record for the product
@@ -1128,6 +1148,7 @@ class Worker(threading.Thread):
             product = db.Product(name=name,
                                  description=description,
                                  price=price,
+                                 delivery=delivery_info,
                                  deleted=False)
             # Add the record to the database
             self.session.add(product)
@@ -1151,6 +1172,10 @@ class Worker(threading.Thread):
             self.bot.send_chat_action(self.chat.id, action="upload_photo")
             # Set the image for that product
             product.set_image(photo_file)
+
+        if not isinstance(delivery_info, CancelSignal) and delivery_info is not None:
+            product.delivery = delivery_info
+
         # Commit the session changes
         self.session.commit()
         # Notify the user

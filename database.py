@@ -98,6 +98,8 @@ class Product(TableDeclarativeBase):
     price = Column(Integer)
     # Image data
     image = Column(LargeBinary)
+    # Delivery data
+    delivery = Column(String)
     # Product has been deleted
     deleted = Column(Boolean, nullable=False)
 

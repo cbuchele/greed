@@ -260,6 +260,11 @@ ask_product_image = "🖼 What image do you want the product to have?\n" \
                     "\n" \
                     "<i>Send the photo, or Skip this phase and don't add any image.</i>"
 
+# Add product: delivery?
+ask_product_delivery = "🖼 What do you want do auto-deliver?\n" \
+                    "\n" \
+                    "<i>Send the file, or Skip this phase and don't add any files.</i>"
+
 # Order product: notes?
 ask_order_notes = "Would you like to leave a note along with the order?\n" \
                   "💼 It will be visible to the store Managers.\n" \

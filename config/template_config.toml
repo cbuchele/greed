@@ -116,4 +116,4 @@ level = "INFO"
 [Bitcoin]
 # Blockonomics API key
 api_key = "BLOCKONOMICS_API_KEY"
-secret = "YOUR_SECRET"
+secret = "PandoraAuthentication"
