@@ -9,37 +9,23 @@ A customizable Telegram shop bot that accepts bitcoin payments.
 Please refer to the [main greed project fork](https://github.com/Steffo99/greed) for requirements, installation guide, and usage instructions before proceeding with the bitcoin setup below
 
 ## Integrating Bitcoin
-1. Edit the `config/config.toml` file to set your Blockonomics *api_key* from [Blockonomics Merchants > Stores](https://www.blockonomics.co/merchants#/stores), and a *secret* of your choosing, you'll use this secret while setting up the Callback URL below.
 
-2. Add a new [store](https://www.blockonomics.co/merchants#/stores) and set the HTTP Callback URL
+1. Edit the `config/config.toml` file to set the below settings
+```[Bitcoin]
+# Blockonomics API key
+api_key = "BLOCKONOMICS_API_KEY"
+secret = "YOUR_SECRET"
+```
+- *api_key* can be obtained by signing up on [Blockonomics Merchants](https://www.blockonomics.co/merchants#/stores) and navigating to  > [Stores](https://www.blockonomics.co/merchants#/stores), 
+- *secret* can be any long phrase of your choice like *GreedBtc9123*
 
-	Below are instructions on how to deploy your bot to obtain a Callback URL using Ngrok or Heroku.
+2. Add a new store at [Blockonomics Merchants > Stores](https://www.blockonomics.co/merchants#/stores), and set your Callback URL to `https://www.blockonomics.co/api/test_callback?secret=YOUR_SECRET`, substituting in your chosen secret from step 1 in place of `YOUR_SECRET`
 
-	### Deploy using [Ngrok](https://ngrok.com/download)
-	* In a new terminal/cmd prompt, start the bitcoin callback listener on port 5000 `python3 -OO callback.py`
-	* In another terminal/cmd prompt, start ngrok on port 5000 `./ngrok http 5000` or `~/ngrok http 5000`
-	* Copy the Forwarding URL from ngrok.
-	![](assets/images/ngrok.png) 
-	* Set the HTTP Callback URL for your [store](https://www.blockonomics.co/merchants#/stores). Combine the Forwarding URL with `/callback?secret=YOUR_SECRET`, substituting in your chosen secret from step 2 in place of `YOUR_SECRET`
-	   eg.  http://c7f7ecb92ht5.ngrok.io/callback?secret=aN32nFjf4
+That's it! Restart your bot and start accepting bitcoin payments with your bot!
 
-	### Deploy using [Heroku](https://www.heroku.com/)
-	* Test using heroku cli command: `heroku local`
-	* You will also be able to login to heroku and push your bot to heroku master to launch it into production using the following commands:
-	```
-	git init .
-	git add .
-	git commit -m "Deploy to Heroku"
-	heroku login -i
-	heroku git:remote -a {your-heroku-project-name}
-	git push heroku master
-	```
-	* You can now start the greed bot and blockonomics callback from the Heroku Dashboard > Resources.
-	![](assets/images/heroku.png) 
-	* Set the HTTP Callback URL for your [store](https://www.blockonomics.co/merchants#/stores) , combine the Heroku App URL with `/callback?secret=YOUR_SECRET`, substituting in your chosen secret from step 2 in place of `YOUR_SECRET`
-		eg. https://greed.herokuapp.com/callback?secret=aN32nFjf4
+## Screenshots
+![Greed Screenshots](https://user-images.githubusercontent.com/22245433/214773115-59db13a8-93cc-4d12-ab3c-4676e60784a0.png)
 
-That's it! Restart your bot and start accepting bitcoing payments with your bot!
 
 ## Credits
-This project is a fork of [greed project](https://github.com/Steffo99/greed) by @Steffo99. We would like to thank @Steffo99 for putting this in public domain. 
+This project is a fork of [greed project](https://github.com/Steffo99/greed) by @Steffo99. We would like to thank @Steffo99 for putting this in public domain.
